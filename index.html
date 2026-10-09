@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DOCX Font Converter</title>
+<style>
+body {
+  margin: 0;
+  padding: 22px 14px;
+  background: #f2f3f5;
+  color: #20242a;
+  font-family: Arial, sans-serif;
+}
+main {
+  max-width: 540px;
+  margin: 20px auto;
+  padding: 22px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 3px 16px #00000012;
+}
+h2 { text-align: center; }
+p { line-height: 1.7; color: #555; }
+label { display: block; margin: 18px 0 8px; font-weight: bold; }
+input, select, button {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ccc;
+  border-radius: 9px;
+  font-size: 16px;
+}
+button {
+  margin-top: 20px;
+  background: #20242a;
+  color: white;
+  border: 0;
+  font-weight: bold;
+}
+button:disabled { opacity: .5; }
+#status { margin-top: 18px; overflow-wrap: anywhere; }
+.note { font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h2>DOCX Font Converter</h2>
+  <p>Word ফাইল আপলোড করো, নতুন ফন্ট নির্বাচন করো এবং কনভার্ট করা ফাইল ডাউনলোড করো।</p>
+
+  <label for="file">১. Word ফাইল নির্বাচন করো</label>
+  <input id="file" type="file"
+    accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+
+  <label for="font">২. নতুন ফন্ট নির্বাচন করো</label>
+  <select id="font">
+    <option value="Arial">Arial</option>
+    <option value="Calibri">Calibri</option>
+    <option value="Times New Roman">Times New Roman</option>
+    <option value="Noto Sans">Noto Sans</option>
+    <option value="Noto Serif Bengali">Noto Serif Bengali</option>
+    <option value="Noto Naskh Arabic">Noto Naskh Arabic</option>
+    <option value="SolaimanLipi">SolaimanLipi</option>
+  </select>
+
+  <button id="convert">ফন্ট পরিবর্তন করো</button>
+  <div id="status" role="status"></div>
+
+  <p class="note">ফাইলটি এই ব্রাউজারেই প্রক্রিয়াকরণ করা হয়। ফন্টের নাম পরিবর্তন করা হয়, ফন্ট ফাইল ডকুমেন্টে যুক্ত করা হয় না।</p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+const fileInput = document.getElementById("file");
+const fontInput = document.getElementById("font");
+const button = document.getElementById("convert");
+const statusBox = document.getElementById("status");
+
+function setFontOnElement(el, font) {
+  let rFonts = el.getElementsByTagNameNS(W, "rFonts")[0];
+
+  if (!rFonts) {
+    rFonts = el.ownerDocument.createElementNS(W, "w:rFonts");
+    el.insertBefore(rFonts, el.firstChild);
+  }
+
+  ["ascii", "hAnsi", "eastAsia", "cs"].forEach(key => {
+    rFonts.setAttributeNS(W, "w:" + key, font);
+  });
+
+  ["asciiTheme", "hAnsiTheme", "eastAsiaTheme", "cstheme"].forEach(key => {
+    rFonts.removeAttributeNS(W, key);
+  });
+}
+
+function convertXml(xmlText, font) {
+  const doc = new DOMParser().parseFromString(
+    xmlText, "application/xml"
+  );
+
+  if (doc.getElementsByTagName("parsererror").length) {
+    throw new Error("একটি Word XML অংশ পড়া যায়নি।");
+  }
+
+  // প্রতিটি লেখার run-এ ফন্ট নির্ধারণ
+  const runs = Array.from(doc.getElementsByTagNameNS(W, "r"));
+
+  runs.forEach(run => {
+    let rPr = Array.from(run.children).find(
+      el => el.namespaceURI === W && el.localName === "rPr"
+    );
+
+    if (!rPr) {
+      rPr = doc.createElementNS(W, "w:rPr");
+      run.insertBefore(rPr, run.firstChild);
+    }
+
+    setFontOnElement(rPr, font);
+  });
+
+  // Style ও অন্যান্য run properties-এ ফন্ট নির্ধারণ
+  Array.from(doc.getElementsByTagNameNS(W, "rPr"))
+    .forEach(rPr => setFontOnElement(rPr, font));
+
+  return new XMLSerializer().serializeToString(doc);
+}
+
+button.addEventListener("click", async () => {
+  const file = fileInput.files[0];
+
+  if (!file) {
+    statusBox.textContent = "আগে একটি DOCX ফাইল নির্বাচন করো।";
+    return;
+  }
+
+  if (!file.name.toLowerCase().endsWith(".docx")) {
+    statusBox.textContent = "শুধু .docx ফাইল ব্যবহার করো।";
+    return;
+  }
+
+  if (typeof JSZip === "undefined") {
+    statusBox.textContent = "লাইব্রেরি লোড হয়নি। ইন্টারনেট সংযোগ পরীক্ষা করো।";
+    return;
+  }
+
+  button.disabled = true;
+  statusBox.textContent = "ফাইল প্রক্রিয়াকরণ হচ্ছে। অপেক্ষা করো...";
+
+  try {
+    const zip = await JSZip.loadAsync(file);
+    const entries = Object.keys(zip.files).filter(name =>
+      /^word\/.+\.xml$/i.test(name) &&
+      !zip.files[name].dir
+    );
+
+    let changed = 0;
+    const font = fontInput.value;
+
+    for (const name of entries) {
+      const entry = zip.files[name];
+      const original = await entry.async("string");
+
+      // শুধু WordprocessingML namespace থাকা ফাইল পরিবর্তন
+      if (!original.includes(W)) continue;
+
+      const updated = convertXml(original, font);
+      zip.file(name, updated);
+      changed++;
+    }
+
+    if (!changed) {
+      throw new Error("Word-এর লেখার অংশ পাওয়া যায়নি।");
+    }
+
+    statusBox.textContent =
+      "ফন্ট পরিবর্তন সম্পন্ন হচ্ছে। ফাইল তৈরি করো...";
+
+    const blob = await zip.generateAsync({
+      type: "blob",
+      mimeType:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      compression: "DEFLATE",
+      compressionOptions: { level: 3 }
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = file.name.replace(/\.docx$/i, "") + "_converted.docx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+
+    statusBox.textContent =
+      "কাজ শেষ। পরিবর্তিত DOCX ফাইল ডাউনলোডের জন্য প্রস্তুত।";
+  } catch (error) {
+    statusBox.textContent =
+      "সমস্যা হয়েছে: " + error.message +
+      "। ছোট একটি DOCX ফাইল দিয়ে আবার পরীক্ষা করো।";
+  } finally {
+    button.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

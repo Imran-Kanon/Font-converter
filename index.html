@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="bn">
 <head>
@@ -44,10 +45,10 @@ button:disabled{opacity:.55}
 <body>
 <main>
 <h1>DOCX Font Converter</h1>
-<p>Word ফাইলের ফন্ট পরিবর্তন করো এবং প্রয়োজনে পৃষ্ঠা নম্বর যোগ করো।</p>
+<p>এক বা একাধিক Word ফাইলের ফন্ট পরিবর্তন করো এবং প্রয়োজনে পৃষ্ঠা নম্বর যোগ করো।</p>
 
 <label for="file">১. Word ফাইল নির্বাচন করো</label>
-<input id="file" type="file"
+<input id="file" type="file" multiple
 accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
 
 <label for="font">২. ফন্ট নির্বাচন করো</label>
@@ -88,12 +89,12 @@ accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.doc
   </label>
 </div>
 
-<button id="convert">কনভার্ট ও ডাউনলোড করো</button>
+<button id="convert">কনভার্ট ও ZIP ডাউনলোড করো</button>
 <div id="status" role="status" aria-live="polite"></div>
 
 <p class="note">
-মিশ্র ফন্টে বাংলা: Noto Serif Bengali, আরবি: Noto Naskh Arabic,
-ইংরেজি: Noto Sans ব্যবহার করা হবে।
+মিশ্র ফন্টে বাংলাঃ Noto Serif Bengali, আরবিঃ Noto Naskh Arabic,
+ইংরেজিঃ Noto Sans ব্যবহার করা হবে।
 </p>
 <p class="note">
 ফন্টগুলো DOCX ফাইলে এমবেড করা হয় না।
@@ -232,6 +233,7 @@ function splitMixedRun(run){
        !(e.namespaceURI===W && e.localName==="t")
   );
 
+  // জটিল run ভাঙলে বিন্যাস নষ্ট হতে পারে, তাই সেগুলো অক্ষত রাখা হয়।
   if(textNodes.length!==1 || otherNodes.length!==0){
     const text=textNodes.map(t=>t.textContent||"").join("");
     const counts={bn:0,ar:0,en:0};
@@ -316,45 +318,28 @@ async function readXml(zip,path){
   const file=zip.file(path);
   if(!file) return null;
 
-  return new DOMParser().parseFromString(
+  const doc=new DOMParser().parseFromString(
     await file.async("string"),"application/xml"
   );
+
+  if(doc.getElementsByTagName("parsererror").length){
+    throw new Error(path+" ফাইলটি পড়া যায়নি।");
+  }
+
+  return doc;
 }
 
 function saveXml(zip,path,doc){
   zip.file(path,new XMLSerializer().serializeToString(doc));
 }
 
-function getOrCreateChild(doc,parent,namespace,name,prefix){
-  let element=Array.from(parent.children).find(
-    e=>e.namespaceURI===namespace && e.localName===name
-  );
-
-  if(!element){
-    element=doc.createElementNS(namespace,prefix+":"+name);
-    parent.appendChild(element);
-  }
-
-  return element;
-}
-
-/* পৃষ্ঠা নম্বরের ফুটার তৈরি */
+/* পৃষ্ঠা নম্বরের footer তৈরি */
 
 function createFooterXml(){
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:ftr xmlns:w="${W}">
   <w:p>
-    <w:pPr>
-      <w:jc w:val="center"/>
-      <w:rPr>
-        <w:rFonts w:ascii="Noto Serif Bengali"
-          w:hAnsi="Noto Serif Bengali"
-          w:eastAsia="Noto Serif Bengali"
-          w:cs="Noto Serif Bengali"/>
-        <w:lang w:val="bn-BD" w:eastAsia="bn-BD" w:bidi="bn-BD"/>
-        <w:sz w:val="22"/>
-      </w:rPr>
-    </w:pPr>
+    <w:pPr><w:jc w:val="center"/></w:pPr>
     <w:r>
       <w:rPr>
         <w:rFonts w:ascii="Noto Serif Bengali"
@@ -362,16 +347,13 @@ function createFooterXml(){
           w:eastAsia="Noto Serif Bengali"
           w:cs="Noto Serif Bengali"/>
         <w:lang w:val="bn-BD" w:eastAsia="bn-BD" w:bidi="bn-BD"/>
-        <w:sz w:val="22"/>
       </w:rPr>
       <w:fldChar w:fldCharType="begin" w:dirty="true"/>
     </w:r>
     <w:r>
-      <w:instrText xml:space="preserve"> PAGE </w:instrText>
+      <w:instrText xml:space="preserve"> PAGE \\* Arabic </w:instrText>
     </w:r>
-    <w:r>
-      <w:fldChar w:fldCharType="separate"/>
-    </w:r>
+    <w:r><w:fldChar w:fldCharType="separate"/></w:r>
     <w:r>
       <w:rPr>
         <w:rFonts w:ascii="Noto Serif Bengali"
@@ -379,13 +361,10 @@ function createFooterXml(){
           w:eastAsia="Noto Serif Bengali"
           w:cs="Noto Serif Bengali"/>
         <w:lang w:val="bn-BD" w:eastAsia="bn-BD" w:bidi="bn-BD"/>
-        <w:sz w:val="22"/>
       </w:rPr>
-      <w:t>১</w:t>
+      <w:t>1</w:t>
     </w:r>
-    <w:r>
-      <w:fldChar w:fldCharType="end"/>
-    </w:r>
+    <w:r><w:fldChar w:fldCharType="end"/></w:r>
   </w:p>
 </w:ftr>`;
 }
@@ -417,17 +396,14 @@ async function addPageNumbers(zip){
     sections=[sectPr];
   }
 
-  /* নতুন relationship ID নির্ধারণ */
-
-  const ids=Array.from(rels.getElementsByTagNameNS(REL,"Relationship"))
-    .map(e=>e.getAttribute("Id"));
+  const ids=Array.from(
+    rels.getElementsByTagNameNS(REL,"Relationship")
+  ).map(e=>e.getAttribute("Id"));
 
   let nextId=1;
   while(ids.includes("rId"+nextId)) nextId++;
 
   const relationshipId="rId"+nextId;
-
-  /* নতুন footer ফাইলের নাম নির্ধারণ */
 
   let footerNumber=1;
   let footerPath="word/footer"+footerNumber+".xml";
@@ -437,24 +413,22 @@ async function addPageNumbers(zip){
     footerPath="word/footer"+footerNumber+".xml";
   }
 
-  const footerTarget="footer"+footerNumber+".xml";
-
-  /* document.xml.rels-এ footer relationship যোগ */
-
   const relationship=rels.createElementNS(REL,"Relationship");
   relationship.setAttribute("Id",relationshipId);
-  relationship.setAttribute("Type",
-    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer");
-  relationship.setAttribute("Target",footerTarget);
+  relationship.setAttribute(
+    "Type",
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer"
+  );
+  relationship.setAttribute("Target","footer"+footerNumber+".xml");
   rels.documentElement.appendChild(relationship);
-
-  /* প্রতিটি section-এ ডিফল্ট footer reference যোগ */
 
   sections.forEach(sectPr=>{
     Array.from(sectPr.children).forEach(child=>{
-      if(child.namespaceURI===W &&
-         child.localName==="footerReference" &&
-         child.getAttributeNS(W,"type")==="default"){
+      if(
+        child.namespaceURI===W &&
+        child.localName==="footerReference" &&
+        child.getAttributeNS(W,"type")==="default"
+      ){
         sectPr.removeChild(child);
       }
     });
@@ -471,8 +445,6 @@ async function addPageNumbers(zip){
     sectPr.insertBefore(footerRef,firstNonReference||null);
   });
 
-  /* Content Types-এ footer-এর পরিচয় যোগ */
-
   const existingOverride=Array.from(
     types.getElementsByTagNameNS(CT,"Override")
   ).find(e=>e.getAttribute("PartName")==="/"+footerPath);
@@ -480,12 +452,12 @@ async function addPageNumbers(zip){
   if(!existingOverride){
     const override=types.createElementNS(CT,"Override");
     override.setAttribute("PartName","/"+footerPath);
-    override.setAttribute("ContentType",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml");
+    override.setAttribute(
+      "ContentType",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"
+    );
     types.documentElement.appendChild(override);
   }
-
-  /* Word-কে field আপডেট করতে অনুরোধ */
 
   const settingsPath="word/settings.xml";
   const settings=await readXml(zip,settingsPath);
@@ -511,18 +483,55 @@ async function addPageNumbers(zip){
   saveXml(zip,typesPath,types);
 }
 
-/* কনভার্ট ও ডাউনলোড */
+/* একটি DOCX ফাইল কনভার্ট */
+
+async function processDocx(file,choice,addPages){
+  const zip=await JSZip.loadAsync(file);
+
+  const names=Object.keys(zip.files).filter(name=>
+    /^word\/.+\.xml$/i.test(name) && !zip.files[name].dir
+  );
+
+  let changed=0;
+
+  for(const name of names){
+    const original=await zip.files[name].async("string");
+
+    if(!original.includes(W)) continue;
+
+    zip.file(name,convertXml(original,choice));
+    changed++;
+  }
+
+  if(!changed){
+    throw new Error("Word-এর উপযুক্ত লেখা পাওয়া যায়নি।");
+  }
+
+  if(addPages){
+    await addPageNumbers(zip);
+  }
+
+  return zip.generateAsync({
+    type:"uint8array",
+    compression:"DEFLATE",
+    compressionOptions:{level:3}
+  });
+}
+
+/* একাধিক ফাইল কনভার্ট করে একটি ZIP ডাউনলোড */
 
 button.addEventListener("click",async()=>{
-  const file=fileInput.files[0];
+  const files=Array.from(fileInput.files);
 
-  if(!file){
-    statusBox.textContent="প্রথমে একটি DOCX ফাইল নির্বাচন করো।";
+  if(files.length===0){
+    statusBox.textContent="প্রথমে অন্তত একটি DOCX ফাইল নির্বাচন করো।";
     return;
   }
 
-  if(!/\.docx$/i.test(file.name)){
-    statusBox.textContent="শুধু DOCX ফাইল ব্যবহার করা যাবে।";
+  const invalid=files.filter(file=>!/\.docx$/i.test(file.name));
+
+  if(invalid.length){
+    statusBox.textContent="শুধু DOCX ফাইল নির্বাচন করো।";
     return;
   }
 
@@ -532,40 +541,48 @@ button.addEventListener("click",async()=>{
   }
 
   button.disabled=true;
-  statusBox.textContent="ফাইল প্রক্রিয়াকরণ হচ্ছে...";
 
   try{
-    const zip=await JSZip.loadAsync(file);
-    const names=Object.keys(zip.files).filter(name=>
-      /^word\/.+\.xml$/i.test(name) && !zip.files[name].dir
-    );
-
     const choice=fontInput.value;
-    let changed=0;
+    const addPages=pageInput.checked;
+    const outputZip=new JSZip();
+    const errors=[];
+    let completed=0;
 
-    for(const name of names){
-      const original=await zip.files[name].async("string");
+    for(let i=0;i<files.length;i++){
+      const file=files[i];
 
-      if(!original.includes(W)) continue;
+      statusBox.textContent=
+        "ফাইল "+(i+1)+" / "+files.length+" প্রক্রিয়াকরণ হচ্ছে: "+file.name;
 
-      zip.file(name,convertXml(original,choice));
-      changed++;
+      try{
+        const data=await processDocx(file,choice,addPages);
+
+        const base=file.name.replace(/\.docx$/i,"");
+        let outputName=base+"_converted.docx";
+        let counter=2;
+
+        while(outputZip.file(outputName)){
+          outputName=base+"_converted_"+counter+".docx";
+          counter++;
+        }
+
+        outputZip.file(outputName,data);
+        completed++;
+      }catch(error){
+        errors.push(file.name+": "+error.message);
+      }
     }
 
-    if(!changed){
-      throw new Error("Word-এর উপযুক্ত লেখা পাওয়া যায়নি।");
+    if(completed===0){
+      throw new Error("কোনো ফাইল কনভার্ট করা যায়নি। "+errors.join(" | "));
     }
 
-    if(pageInput.checked){
-      statusBox.textContent="পৃষ্ঠা নম্বর যোগ করা হচ্ছে...";
-      await addPageNumbers(zip);
-    }
+    statusBox.textContent=
+      completed+"টি ফাইল কনভার্ট হয়েছে। ZIP তৈরি হচ্ছে...";
 
-    statusBox.textContent="ডাউনলোড ফাইল তৈরি হচ্ছে...";
-
-    const blob=await zip.generateAsync({
+    const blob=await outputZip.generateAsync({
       type:"blob",
-      mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       compression:"DEFLATE",
       compressionOptions:{level:3}
     });
@@ -574,7 +591,7 @@ button.addEventListener("click",async()=>{
     const a=document.createElement("a");
 
     a.href=url;
-    a.download=file.name.replace(/\.docx$/i,"")+"_converted.docx";
+    a.download="DOCX_Converted_Files.zip";
 
     document.body.appendChild(a);
     a.click();
@@ -582,8 +599,14 @@ button.addEventListener("click",async()=>{
 
     setTimeout(()=>URL.revokeObjectURL(url),60000);
 
-    statusBox.textContent=
-      "কনভার্ট সম্পন্ন হয়েছে। Word-এ ফাইল খুলে পৃষ্ঠা নম্বর পরীক্ষা করো।";
+    let message=
+      "সম্পন্ন! "+completed+"টি কনভার্ট করা DOCX ফাইল ZIP আকারে ডাউনলোড হয়েছে।";
+
+    if(errors.length){
+      message+="\n\nযেসব ফাইলে সমস্যা হয়েছে:\n"+errors.join("\n");
+    }
+
+    statusBox.textContent=message;
 
   }catch(error){
     statusBox.textContent="সমস্যা হয়েছে: "+error.message;

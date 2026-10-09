@@ -6,308 +6,592 @@
 <title>DOCX Font Converter</title>
 
 <style>
-* {
-  box-sizing: border-box;
+*{box-sizing:border-box}
+body{
+  margin:0;padding:20px 14px;background:#f2f3f5;
+  color:#222831;font-family:Arial,sans-serif
 }
-
-body {
-  margin: 0;
-  padding: 20px 14px;
-  background: #f3f4f6;
-  color: #222831;
-  font-family: Arial, sans-serif;
+main{
+  max-width:560px;margin:20px auto;padding:24px 20px;
+  background:white;border-radius:16px;
+  box-shadow:0 4px 20px #00000012
 }
-
-main {
-  max-width: 560px;
-  margin: 20px auto;
-  padding: 24px 20px;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px #00000012;
+h1{text-align:center;font-size:25px}
+p{line-height:1.8;color:#555}
+label{display:block;margin:22px 0 9px;font-weight:bold}
+input[type=file],select,button{
+  width:100%;padding:14px;border:1px solid #ccc;
+  border-radius:10px;font-size:16px
 }
-
-h1 {
-  text-align: center;
-  font-size: 25px;
-  margin-top: 5px;
+select{background:white}
+button{
+  margin-top:22px;background:#252a34;color:white;
+  font-weight:bold;border:0
 }
-
-.description {
-  text-align: center;
-  color: #60656f;
-  line-height: 1.7;
+button:disabled{opacity:.55}
+#status{margin-top:18px;line-height:1.8;overflow-wrap:anywhere}
+.note{font-size:13px;color:#666}
+.checkrow{
+  display:flex;align-items:center;gap:10px;
+  margin-top:20px;padding:14px;border:1px solid #ddd;
+  border-radius:10px;line-height:1.6
 }
-
-label {
-  display: block;
-  margin: 22px 0 9px;
-  font-weight: bold;
-}
-
-input, select, button {
-  width: 100%;
-  padding: 14px;
-  border: 1px solid #d0d5dd;
-  border-radius: 10px;
-  font-size: 16px;
-}
-
-select {
-  background: #fff;
-}
-
-button {
-  margin-top: 22px;
-  background: #252a34;
-  color: white;
-  font-weight: bold;
-  border: none;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: .55;
-}
-
-#status {
-  margin-top: 18px;
-  line-height: 1.7;
-  overflow-wrap: anywhere;
-}
-
-.note {
-  margin-top: 20px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: #666;
-}
+.checkrow input{width:20px;height:20px;flex-shrink:0}
+.checkrow label{margin:0;font-weight:normal}
 </style>
 </head>
 
 <body>
 <main>
-  <h1>DOCX Font Converter</h1>
+<h1>DOCX Font Converter</h1>
+<p>Word ফাইলের ফন্ট পরিবর্তন করো এবং প্রয়োজনে পৃষ্ঠা নম্বর যোগ করো।</p>
 
-  <p class="description">
-    Word ডকুমেন্টের ফন্ট পরিবর্তন করে নতুন DOCX ফাইল ডাউনলোড করো।
-  </p>
+<label for="file">১. Word ফাইল নির্বাচন করো</label>
+<input id="file" type="file"
+accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
 
-  <label for="file">১. Word ফাইল নির্বাচন করো</label>
+<label for="font">২. ফন্ট নির্বাচন করো</label>
+<select id="font">
+  <optgroup label="মিশ্র ফন্ট">
+    <option value="MIXED">মিশ্র ফন্ট: বাংলা + আরবি + ইংরেজি</option>
+  </optgroup>
 
-  <input
-    id="file"
-    type="file"
-    accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-  >
+  <optgroup label="বাংলা ফন্ট">
+    <option value="Noto Serif Bengali">Noto Serif Bengali</option>
+    <option value="Noto Sans Bengali">Noto Sans Bengali</option>
+    <option value="Kalpurush">Kalpurush</option>
+    <option value="SolaimanLipi">SolaimanLipi</option>
+    <option value="Siyam Rupali">Siyam Rupali</option>
+    <option value="Nikosh">Nikosh</option>
+    <option value="AdorshoLipi">AdorshoLipi</option>
+    <option value="Mukti">Mukti</option>
+    <option value="Vrinda">Vrinda</option>
+  </optgroup>
 
-  <label for="font">২. নতুন ফন্ট নির্বাচন করো</label>
+  <optgroup label="আরবি ফন্ট">
+    <option value="Noto Naskh Arabic">Noto Naskh Arabic</option>
+    <option value="Traditional Arabic">Traditional Arabic</option>
+    <option value="Amiri">Amiri</option>
+  </optgroup>
 
-  <select id="font">
-    <optgroup label="বাংলা ফন্ট">
-      <option value="Noto Serif Bengali">Noto Serif Bengali</option>
-      <option value="Noto Sans Bengali">Noto Sans Bengali</option>
-      <option value="Kalpurush">Kalpurush</option>
-      <option value="SolaimanLipi">SolaimanLipi</option>
-      <option value="Siyam Rupali">Siyam Rupali</option>
-      <option value="Nikosh">Nikosh</option>
-      <option value="AdorshoLipi">AdorshoLipi</option>
-      <option value="Mukti">Mukti</option>
-      <option value="Vrinda">Vrinda</option>
-    </optgroup>
+  <optgroup label="সাধারণ ফন্ট">
+    <option value="Arial">Arial</option>
+    <option value="Calibri">Calibri</option>
+    <option value="Times New Roman">Times New Roman</option>
+  </optgroup>
+</select>
 
-    <optgroup label="আরবি ফন্ট">
-      <option value="Noto Naskh Arabic">Noto Naskh Arabic</option>
-      <option value="Traditional Arabic">Traditional Arabic</option>
-      <option value="Amiri">Amiri</option>
-      <option value="Arial">Arial</option>
-    </optgroup>
+<div class="checkrow">
+  <input id="addPageNumbers" type="checkbox" checked>
+  <label for="addPageNumbers">
+    ৩. পৃষ্ঠার নিচে মাঝখানে পৃষ্ঠা নম্বর যোগ করো
+  </label>
+</div>
 
-    <optgroup label="সাধারণ ফন্ট">
-      <option value="Times New Roman">Times New Roman</option>
-      <option value="Calibri">Calibri</option>
-      <option value="Arial">Arial</option>
-    </optgroup>
-  </select>
+<button id="convert">কনভার্ট ও ডাউনলোড করো</button>
+<div id="status" role="status" aria-live="polite"></div>
 
-  <button id="convert">ফন্ট পরিবর্তন করো</button>
-
-  <div id="status" role="status" aria-live="polite"></div>
-
-  <p class="note">
-    ফাইলটি তোমার ব্রাউজারেই প্রক্রিয়াকরণ করা হয়।
-    ফন্টের নাম পরিবর্তন করা হয়, ফন্ট ফাইল ডকুমেন্টে এমবেড করা হয় না।
-    নির্বাচিত ফন্ট ডিভাইসে না থাকলে Word বিকল্প ফন্ট দেখাতে পারে।
-  </p>
+<p class="note">
+মিশ্র ফন্টে বাংলা: Noto Serif Bengali, আরবি: Noto Naskh Arabic,
+ইংরেজি: Noto Sans ব্যবহার করা হবে। পৃষ্ঠা নম্বর Word-এর
+PAGE ফিল্ডের মাধ্যমে তৈরি হবে। বাংলা অঙ্ক প্রদর্শন Word-এর
+ভাষা ও সংখ্যার সেটিংসের ওপর নির্ভর করতে পারে।
+</p>
+<p class="note">
+ফন্টগুলো DOCX ফাইলে এমবেড করা হয় না। বিদ্যমান ডিফল্ট ফুটার
+থাকলে পৃষ্ঠা নম্বর যোগ করার সময় সেটি প্রতিস্থাপিত হতে পারে।
+</p>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
 <script>
-const W =
-  "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+const W="http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+const R="http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+const REL="http://schemas.openxmlformats.org/package/2006/relationships";
+const CT="http://schemas.openxmlformats.org/package/2006/content-types";
+const XMLNS="http://www.w3.org/XML/1998/namespace";
 
-const fileInput = document.getElementById("file");
-const fontInput = document.getElementById("font");
-const button = document.getElementById("convert");
-const statusBox = document.getElementById("status");
+const MIXED={
+  bn:"Noto Serif Bengali",
+  ar:"Noto Naskh Arabic",
+  en:"Noto Sans"
+};
 
-function setFontOnElement(el, font) {
-  const doc = el.ownerDocument;
+const fileInput=document.getElementById("file");
+const fontInput=document.getElementById("font");
+const pageInput=document.getElementById("addPageNumbers");
+const button=document.getElementById("convert");
+const statusBox=document.getElementById("status");
 
-  let rFonts = Array.from(el.children).find(
-    child =>
-      child.namespaceURI === W &&
-      child.localName === "rFonts"
-  );
+function scriptOf(ch){
+  const n=ch.codePointAt(0);
 
-  if (!rFonts) {
-    rFonts = doc.createElementNS(W, "w:rFonts");
-    el.insertBefore(rFonts, el.firstChild);
+  if(n>=0x0980 && n<=0x09FF) return "bn";
+
+  if(
+    (n>=0x0600 && n<=0x06FF) ||
+    (n>=0x0750 && n<=0x077F) ||
+    (n>=0x08A0 && n<=0x08FF) ||
+    (n>=0xFB50 && n<=0xFDFF) ||
+    (n>=0xFE70 && n<=0xFEFF) ||
+    (n>=0x1EE00 && n<=0x1EEFF)
+  ) return "ar";
+
+  if(
+    (n>=0x0041 && n<=0x005A) ||
+    (n>=0x0061 && n<=0x007A) ||
+    (n>=0x0030 && n<=0x0039)
+  ) return "en";
+
+  return "common";
+}
+
+function makeChunks(text){
+  const chars=Array.from(text);
+  const types=chars.map(scriptOf);
+
+  for(let i=0;i<types.length;i++){
+    if(types[i]!=="common") continue;
+
+    let prev=null,next=null;
+
+    for(let j=i-1;j>=0;j--){
+      if(types[j]!=="common"){prev=types[j];break;}
+    }
+
+    for(let j=i+1;j<types.length;j++){
+      if(types[j]!=="common"){next=types[j];break;}
+    }
+
+    types[i]=prev||next||"en";
   }
 
-  ["ascii", "hAnsi", "eastAsia", "cs"].forEach(key => {
-    rFonts.setAttributeNS(W, "w:" + key, font);
+  const chunks=[];
+
+  for(let i=0;i<chars.length;i++){
+    const type=types[i];
+    const last=chunks[chunks.length-1];
+
+    if(last && last.type===type){
+      last.text+=chars[i];
+    }else{
+      chunks.push({type,text:chars[i]});
+    }
+  }
+
+  return chunks;
+}
+
+function getRPr(run){
+  const doc=run.ownerDocument;
+
+  let rPr=Array.from(run.children).find(
+    e=>e.namespaceURI===W && e.localName==="rPr"
+  );
+
+  if(!rPr){
+    rPr=doc.createElementNS(W,"w:rPr");
+    run.insertBefore(rPr,run.firstChild);
+  }
+
+  return rPr;
+}
+
+function setFont(rPr,font){
+  const doc=rPr.ownerDocument;
+
+  let rf=Array.from(rPr.children).find(
+    e=>e.namespaceURI===W && e.localName==="rFonts"
+  );
+
+  if(!rf){
+    rf=doc.createElementNS(W,"w:rFonts");
+    rPr.insertBefore(rf,rPr.firstChild);
+  }
+
+  ["ascii","hAnsi","eastAsia","cs"].forEach(k=>{
+    rf.setAttributeNS(W,"w:"+k,font);
   });
 
-  [
-    "asciiTheme",
-    "hAnsiTheme",
-    "eastAsiaTheme",
-    "cstheme"
-  ].forEach(key => {
-    rFonts.removeAttributeNS(W, key);
+  ["asciiTheme","hAnsiTheme","eastAsiaTheme","cstheme"].forEach(k=>{
+    rf.removeAttributeNS(W,k);
   });
 }
 
-function convertXml(xmlText, font) {
-  const doc = new DOMParser().parseFromString(
-    xmlText,
-    "application/xml"
+function setUniformFont(run,font){
+  setFont(getRPr(run),font);
+}
+
+function splitMixedRun(run){
+  const children=Array.from(run.children);
+
+  const textNodes=children.filter(
+    e=>e.namespaceURI===W && e.localName==="t"
   );
 
-  if (doc.getElementsByTagName("parsererror").length) {
-    throw new Error("Word ফাইলের একটি অংশ পড়া যায়নি।");
+  const otherNodes=children.filter(
+    e=>!(e.namespaceURI===W && e.localName==="rPr") &&
+       !(e.namespaceURI===W && e.localName==="t")
+  );
+
+  if(textNodes.length!==1 || otherNodes.length!==0){
+    const text=textNodes.map(t=>t.textContent||"").join("");
+    const counts={bn:0,ar:0,en:0};
+
+    Array.from(text).forEach(ch=>{
+      const s=scriptOf(ch);
+      if(counts[s]!==undefined) counts[s]++;
+    });
+
+    const dominant=Object.keys(counts).sort(
+      (a,b)=>counts[b]-counts[a]
+    )[0];
+
+    setUniformFont(run,MIXED[dominant]||MIXED.en);
+    return;
   }
 
-  const runs = Array.from(
-    doc.getElementsByTagNameNS(W, "r")
-  );
+  const originalText=textNodes[0].textContent||"";
+  const chunks=makeChunks(originalText);
 
-  runs.forEach(run => {
-    let rPr = Array.from(run.children).find(
-      child =>
-        child.namespaceURI === W &&
-        child.localName === "rPr"
+  if(chunks.length<=1){
+    const type=chunks.length?chunks[0].type:"en";
+    setUniformFont(run,MIXED[type]||MIXED.en);
+    return;
+  }
+
+  const parent=run.parentNode;
+
+  for(const chunk of chunks){
+    const clone=run.cloneNode(true);
+
+    const t=Array.from(clone.children).find(
+      e=>e.namespaceURI===W && e.localName==="t"
     );
 
-    if (!rPr) {
-      rPr = doc.createElementNS(W, "w:rPr");
-      run.insertBefore(rPr, run.firstChild);
+    t.textContent=chunk.text;
+
+    if(/^\s|\s$/.test(chunk.text)){
+      t.setAttributeNS(XMLNS,"xml:space","preserve");
     }
 
-    setFontOnElement(rPr, font);
-  });
+    setUniformFont(
+      clone.children.find(
+        e=>e.namespaceURI===W && e.localName==="rPr"
+      )||getRPr(clone),
+      MIXED[chunk.type]||MIXED.en
+    );
 
-  Array.from(
-    doc.getElementsByTagNameNS(W, "rPr")
-  ).forEach(rPr => {
-    setFontOnElement(rPr, font);
+    parent.insertBefore(clone,run);
+  }
+
+  parent.removeChild(run);
+}
+
+function convertXml(xmlText,choice){
+  const doc=new DOMParser().parseFromString(
+    xmlText,"application/xml"
+  );
+
+  if(doc.getElementsByTagName("parsererror").length){
+    throw new Error("Word XML পড়া যায়নি।");
+  }
+
+  const runs=Array.from(doc.getElementsByTagNameNS(W,"r"));
+
+  runs.forEach(run=>{
+    if(!run.parentNode) return;
+
+    if(choice==="MIXED"){
+      splitMixedRun(run);
+    }else{
+      setUniformFont(run,choice);
+    }
   });
 
   return new XMLSerializer().serializeToString(doc);
 }
 
-button.addEventListener("click", async () => {
-  const file = fileInput.files[0];
+/* XML ফাইল পড়া ও লেখা */
 
-  if (!file) {
-    statusBox.textContent =
-      "প্রথমে একটি DOCX ফাইল নির্বাচন করো।";
-    return;
+async function readXml(zip,path){
+  const file=zip.file(path);
+  if(!file) return null;
+
+  return new DOMParser().parseFromString(
+    await file.async("string"),"application/xml"
+  );
+}
+
+function saveXml(zip,path,doc){
+  zip.file(path,new XMLSerializer().serializeToString(doc));
+}
+
+function getOrCreateChild(doc,parent,namespace,name,prefix){
+  let element=Array.from(parent.children).find(
+    e=>e.namespaceURI===namespace && e.localName===name
+  );
+
+  if(!element){
+    element=doc.createElementNS(namespace,prefix+":"+name);
+    parent.appendChild(element);
   }
 
-  if (!/\.docx$/i.test(file.name)) {
-    statusBox.textContent =
-      "শুধু DOCX ফাইল ব্যবহার করা যাবে।";
-    return;
+  return element;
+}
+
+/* পৃষ্ঠা নম্বরের ফুটার তৈরি */
+
+function createFooterXml(){
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:ftr xmlns:w="${W}">
+  <w:p>
+    <w:pPr>
+      <w:jc w:val="center"/>
+      <w:rPr>
+        <w:rFonts w:ascii="Noto Serif Bengali"
+          w:hAnsi="Noto Serif Bengali"
+          w:eastAsia="Noto Serif Bengali"
+          w:cs="Noto Serif Bengali"/>
+        <w:lang w:val="bn-BD" w:eastAsia="bn-BD" w:bidi="bn-BD"/>
+        <w:sz w:val="22"/>
+      </w:rPr>
+    </w:pPr>
+    <w:r>
+      <w:rPr>
+        <w:rFonts w:ascii="Noto Serif Bengali"
+          w:hAnsi="Noto Serif Bengali"
+          w:eastAsia="Noto Serif Bengali"
+          w:cs="Noto Serif Bengali"/>
+        <w:lang w:val="bn-BD" w:eastAsia="bn-BD" w:bidi="bn-BD"/>
+        <w:sz w:val="22"/>
+      </w:rPr>
+      <w:fldChar w:fldCharType="begin" w:dirty="true"/>
+    </w:r>
+    <w:r>
+      <w:instrText xml:space="preserve"> PAGE </w:instrText>
+    </w:r>
+    <w:r>
+      <w:fldChar w:fldCharType="separate"/>
+    </w:r>
+    <w:r>
+      <w:rPr>
+        <w:rFonts w:ascii="Noto Serif Bengali"
+          w:hAnsi="Noto Serif Bengali"
+          w:eastAsia="Noto Serif Bengali"
+          w:cs="Noto Serif Bengali"/>
+        <w:lang w:val="bn-BD" w:eastAsia="bn-BD" w:bidi="bn-BD"/>
+        <w:sz w:val="22"/>
+      </w:rPr>
+      <w:t>১</w:t>
+    </w:r>
+    <w:r>
+      <w:fldChar w:fldCharType="end"/>
+    </w:r>
+  </w:p>
+</w:ftr>`;
+}
+
+async function addPageNumbers(zip){
+  const documentPath="word/document.xml";
+  const relsPath="word/_rels/document.xml.rels";
+  const typesPath="[Content_Types].xml";
+
+  const doc=await readXml(zip,documentPath);
+  const rels=await readXml(zip,relsPath);
+  const types=await readXml(zip,typesPath);
+
+  if(!doc || !rels || !types){
+    throw new Error("DOCX-এর প্রয়োজনীয় ফাইল পাওয়া যায়নি।");
   }
 
-  if (typeof JSZip === "undefined") {
-    statusBox.textContent =
-      "প্রয়োজনীয় লাইব্রেরি লোড হয়নি। ইন্টারনেট সংযোগ পরীক্ষা করো।";
-    return;
+  const body=doc.getElementsByTagNameNS(W,"body")[0];
+
+  if(!body){
+    throw new Error("Word ডকুমেন্টের মূল অংশ পাওয়া যায়নি।");
   }
 
-  button.disabled = true;
-  statusBox.textContent =
-    "ফাইল প্রক্রিয়াকরণ হচ্ছে। অপেক্ষা করো...";
+  let sections=Array.from(doc.getElementsByTagNameNS(W,"sectPr"));
 
-  try {
-    const zip = await JSZip.loadAsync(file);
+  if(sections.length===0){
+    const sectPr=doc.createElementNS(W,"w:sectPr");
+    body.appendChild(sectPr);
+    sections=[sectPr];
+  }
 
-    const entries = Object.keys(zip.files).filter(name =>
-      /^word\/.+\.xml$/i.test(name) &&
-      !zip.files[name].dir
+  /* নতুন relationship ID নির্ধারণ */
+
+  const ids=Array.from(rels.getElementsByTagNameNS(REL,"Relationship"))
+    .map(e=>e.getAttribute("Id"));
+
+  let nextId=1;
+  while(ids.includes("rId"+nextId)) nextId++;
+
+  const relationshipId="rId"+nextId;
+
+  /* নতুন footer ফাইলের নাম নির্ধারণ */
+
+  let footerNumber=1;
+  let footerPath="word/footer"+footerNumber+".xml";
+
+  while(zip.file(footerPath)){
+    footerNumber++;
+    footerPath="word/footer"+footerNumber+".xml";
+  }
+
+  const footerTarget="footer"+footerNumber+".xml";
+
+  /* document.xml.rels-এ footer relationship যোগ */
+
+  const relationship=rels.createElementNS(REL,"Relationship");
+  relationship.setAttribute("Id",relationshipId);
+  relationship.setAttribute("Type",
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer");
+  relationship.setAttribute("Target",footerTarget);
+  rels.documentElement.appendChild(relationship);
+
+  /* প্রতিটি section-এ ডিফল্ট footer reference যোগ */
+
+  sections.forEach(sectPr=>{
+    Array.from(sectPr.children).forEach(child=>{
+      if(child.namespaceURI===W &&
+         child.localName==="footerReference" &&
+         child.getAttributeNS(W,"type")==="default"){
+        sectPr.removeChild(child);
+      }
+    });
+
+    const footerRef=doc.createElementNS(W,"w:footerReference");
+    footerRef.setAttributeNS(W,"w:type","default");
+    footerRef.setAttributeNS(R,"r:id",relationshipId);
+
+    const firstNonReference=Array.from(sectPr.children).find(child=>
+      child.namespaceURI!==W ||
+      !["headerReference","footerReference"].includes(child.localName)
     );
 
-    const font = fontInput.value;
-    let changed = 0;
+    sectPr.insertBefore(footerRef,firstNonReference||null);
+  });
 
-    for (const name of entries) {
-      const entry = zip.files[name];
-      const original = await entry.async("string");
+  /* Content Types-এ footer-এর পরিচয় যোগ */
 
-      if (!original.includes(W)) {
-        continue;
-      }
+  const existingOverride=Array.from(
+    types.getElementsByTagNameNS(CT,"Override")
+  ).find(e=>e.getAttribute("PartName")==="/"+footerPath);
 
-      const updated = convertXml(original, font);
-      zip.file(name, updated);
+  if(!existingOverride){
+    const override=types.createElementNS(CT,"Override");
+    override.setAttribute("PartName","/"+footerPath);
+    override.setAttribute("ContentType",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml");
+    types.documentElement.appendChild(override);
+  }
+
+  /* Word-কে field আপডেট করতে অনুরোধ */
+
+  const settingsPath="word/settings.xml";
+  const settings=await readXml(zip,settingsPath);
+
+  if(settings){
+    let update=Array.from(
+      settings.getElementsByTagNameNS(W,"updateFields")
+    )[0];
+
+    if(!update){
+      update=settings.createElementNS(W,"w:updateFields");
+      settings.documentElement.appendChild(update);
+    }
+
+    update.setAttributeNS(W,"w:val","true");
+    saveXml(zip,settingsPath,settings);
+  }
+
+  zip.file(footerPath,createFooterXml());
+
+  saveXml(zip,documentPath,doc);
+  saveXml(zip,relsPath,rels);
+  saveXml(zip,typesPath,types);
+}
+
+/* কনভার্ট ও ডাউনলোড */
+
+button.addEventListener("click",async()=>{
+  const file=fileInput.files[0];
+
+  if(!file){
+    statusBox.textContent="প্রথমে একটি DOCX ফাইল নির্বাচন করো।";
+    return;
+  }
+
+  if(!/\.docx$/i.test(file.name)){
+    statusBox.textContent="শুধু DOCX ফাইল ব্যবহার করা যাবে।";
+    return;
+  }
+
+  if(typeof JSZip==="undefined"){
+    statusBox.textContent="লাইব্রেরি লোড হয়নি। ইন্টারনেট পরীক্ষা করো।";
+    return;
+  }
+
+  button.disabled=true;
+  statusBox.textContent="ফাইল প্রক্রিয়াকরণ হচ্ছে...";
+
+  try{
+    const zip=await JSZip.loadAsync(file);
+    const names=Object.keys(zip.files).filter(name=>
+      /^word\/.+\.xml$/i.test(name) && !zip.files[name].dir
+    );
+
+    const choice=fontInput.value;
+    let changed=0;
+
+    for(const name of names){
+      const original=await zip.files[name].async("string");
+
+      if(!original.includes(W)) continue;
+
+      zip.file(name,convertXml(original,choice));
       changed++;
     }
 
-    if (changed === 0) {
-      throw new Error(
-        "Word ডকুমেন্টের উপযুক্ত লেখা পাওয়া যায়নি।"
-      );
+    if(!changed){
+      throw new Error("Word-এর উপযুক্ত লেখা পাওয়া যায়নি।");
     }
 
-    statusBox.textContent =
-      "নতুন DOCX ফাইল তৈরি হচ্ছে...";
+    if(pageInput.checked){
+      statusBox.textContent="পৃষ্ঠা নম্বর যোগ করা হচ্ছে...";
+      await addPageNumbers(zip);
+    }
 
-    const blob = await zip.generateAsync({
-      type: "blob",
-      mimeType:
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      compression: "DEFLATE",
-      compressionOptions: { level: 3 }
+    statusBox.textContent="ডাউনলোড ফাইল তৈরি হচ্ছে...";
+
+    const blob=await zip.generateAsync({
+      type:"blob",
+      mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      compression:"DEFLATE",
+      compressionOptions:{level:3}
     });
 
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
 
-    link.href = url;
-    link.download =
-      file.name.replace(/\.docx$/i, "") +
-      "_converted.docx";
+    a.href=url;
+    a.download=file.name.replace(/\.docx$/i,"")+"_converted.docx";
 
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
 
-    statusBox.textContent =
-      "ফন্ট পরিবর্তন সম্পন্ন হয়েছে। ডাউনলোড করা DOCX ফাইলটি পরীক্ষা করো।";
+    statusBox.textContent=
+      "কনভার্ট সম্পন্ন হয়েছে। Word-এ ফাইল খুলে পৃষ্ঠা নম্বর পরীক্ষা করো।";
 
-  } catch (error) {
-    statusBox.textContent =
-      "সমস্যা হয়েছে: " + error.message +
-      "। ছোট DOCX ফাইল দিয়ে আবার পরীক্ষা করো।";
-
-  } finally {
-    button.disabled = false;
+  }catch(error){
+    statusBox.textContent="সমস্যা হয়েছে: "+error.message;
+  }finally{
+    button.disabled=false;
   }
 });
 </script>
